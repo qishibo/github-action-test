@@ -4,8 +4,11 @@
 name: Node.js CI
 
 on:
-  release:
-    types: [created]
+  #release:
+  #  types: [created]
+  push:
+    branches: 
+    - master
 
 jobs:
   build:
@@ -23,7 +26,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         packages: "libfontconfig1-dev"
-    - run: apt install libfontconfig1-dev
+    - run: sudo apt-get install libfontconfig1-dev
     - run: npm ci
     - run: npm run pack:prepare
     - run: npm run pack:linux
