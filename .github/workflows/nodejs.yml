@@ -17,12 +17,13 @@ jobs:
         node-version: [10.x]
 
     steps:
-    - uses: ryankurte/action-apt@v0.1
+    - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
         packages: "libfontconfig1-dev"
+    - run: apt install libfontconfig1-dev
     - run: npm ci
     - run: npm run pack:prepare
     - run: npm run pack:linux
