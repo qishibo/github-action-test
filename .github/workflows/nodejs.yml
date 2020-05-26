@@ -28,6 +28,11 @@ jobs:
 #     - run: sudo apt-get install libfontconfig1-dev
     - run: npm ci
     - run: npm run pack:prepare
-    - run: npm run pack:linux
-      env: 
-        GH_TOKEN: ${{secrets.GH_TOKEN}}
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: npm run pack:linux
+        env: 
+          GH_TOKEN: ${{secrets.GH_TOKEN}}
