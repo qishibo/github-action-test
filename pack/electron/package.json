@@ -14,7 +14,7 @@
     "owner": "qishibo",
     "repo": "github-action-test"
   }],
-  "repository": "github:qishibo/github-action-test,
+  "repository": "github:qishibo/github-action-test",
   "build": {
     "appId": "me.qii404.another-redis-desktop-manager",
     "productName": "Another Redis Desktop Manager",
