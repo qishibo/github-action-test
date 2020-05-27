@@ -10,7 +10,6 @@
     "build": "node build/build.js",
     "rebuild": "node_modules/.bin/electron-rebuild -w font-manager -t 'dev'",
     "electron": "cross-env NODE_ENV=dev node_modules/.bin/electron pack/electron",
-    "postinstall": "npm run rebuild",
     "lint": "eslint --ext js,vue src --fix",
     "lint:init": "eslint --init",
     "asar": "node_modules/.bin/asar pack dist dist/app.asar --unpack-dir \"{app.asar,build-apps,app.asar.unpacked}\"",
