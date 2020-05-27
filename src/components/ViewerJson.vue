@@ -13,7 +13,7 @@
 </template>
 
 <script type="text/javascript">
-// import JsonViewer from 'vue-json-viewer'
+import JsonViewer from 'vue-json-viewer'
 
 export default {
   data() {
@@ -23,7 +23,7 @@ export default {
       collapseText: 'collapse_all',
     };
   },
-  // components: {JsonViewer},
+  components: {JsonViewer},
   props: ['content'],
   computed: {
     newContent() {
