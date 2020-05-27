@@ -3,17 +3,17 @@
   <div class="collapse-container">
     <el-button class="collapse-btn" type="text" @click="toggleCollapse">{{ $t('message.' + collapseText) }}</el-button>
   </div>
-  <JsonViewer
+  <textarea
     v-if='show'
     :value="newContent"
     :expand-depth="previousDeep"
     >
-  </JsonViewer>
+  </textarea>
 </div>
 </template>
 
 <script type="text/javascript">
-import JsonViewer from 'vue-json-viewer'
+// import JsonViewer from 'vue-json-viewer'
 
 export default {
   data() {
@@ -23,7 +23,7 @@ export default {
       collapseText: 'collapse_all',
     };
   },
-  components: {JsonViewer},
+  // components: {JsonViewer},
   props: ['content'],
   computed: {
     newContent() {
