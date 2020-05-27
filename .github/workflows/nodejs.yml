@@ -26,7 +26,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 #     - run: sudo apt-get install libfontconfig1-dev
-    - run: npm ci
+#     - run: npm ci
+    - run: npm install
     - run: npm run pack:prepare
     - run: npm run pack:linux
       env: 
