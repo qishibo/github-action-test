@@ -4,11 +4,11 @@
 name: build_linux
 
 on:
-#   release:
-#     types: [created, published]
-  push:
-    branches:
-    - master
+  release:
+    types: [created, published]
+  # push:
+    # branches:
+    # - master
 
 jobs:
   build:
