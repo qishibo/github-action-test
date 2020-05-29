@@ -31,7 +31,7 @@ jobs:
 #     - run: npm install --production
 #     - run: npm audit fix
     - run: npm run pack:prepare
-#     - run: npm run pack:linux
-    - run: npm run pack:win
+    - run: npm run pack:linux
+    # - run: npm run pack:win
       env:
         GH_TOKEN: ${{secrets.GH_TOKEN}}
