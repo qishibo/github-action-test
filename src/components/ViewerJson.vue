@@ -3,12 +3,12 @@
   <div class="collapse-container">
     <el-button class="collapse-btn" type="text" @click="toggleCollapse">{{ $t('message.' + collapseText) }}</el-button>
   </div>
-  <textarea
+  <JsonViewer
     v-if='show'
     :value="newContent"
     :expand-depth="previousDeep"
     >
-  </textarea>
+  </JsonViewer>
 </div>
 </template>
 
