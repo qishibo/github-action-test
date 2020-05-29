@@ -5,7 +5,7 @@ name: build_windows
 
 on:
   release:
-    types: [prereleased]
+    types: [created]
   # push:
   #   branches:
   #   - master
