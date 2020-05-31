@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "qii404.me",
   "private": true,
@@ -31,12 +31,6 @@
       "!static/js/*.map",
       "!static/css/*.map"
     ],
-    "publish": [{
-      "provider": "github",
-      "owner": "qishibo",
-      "repo": "github-action-test",
-      "releaseType": "prerelease"
-    }],
     "win": {
       "icon": "icons/icon.png",
       "target": [
