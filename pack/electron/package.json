@@ -25,6 +25,9 @@
       "!static/js/*.map",
       "!static/css/*.map"
     ],
+    "releaseInfo": {
+      "releaseName": "releaseName a a a a a.....${ext}"
+    },
     "publish": [{
       "provider": "github",
       "owner": "qishibo",
@@ -51,7 +54,7 @@
       ]
     },
     "mac": {
-      "icon": "icons/icon.png",
+      "icon": "icons/512.png",
       "type": "development",
       "category": "public.app-category.developer-tools",
       "target": [
