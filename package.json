@@ -20,6 +20,20 @@
     "pack:win:docker": "docker run --rm -it --env GH_TOKEN=$GH_TOKEN --env ELECTRON_CACHE=\"/root/.cache/electron\" --env ELECTRON_BUILDER_CACHE=\"/root/.cache/electron-builder\" -v ${PWD}:/project -v ~/.cache/electron:/root/.cache/electron -v ~/.cache/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine sh -c \"node_modules/.bin/electron-builder --project=dist -w -p never\"",
     "et": "node_modules/.bin/et -m"
   },
+  "publish": [{
+    "provider": "github",
+    "owner": "qishibo",
+    "repo": "github-action-test",
+    "releaseType": "prerelease"
+  }],
+  "build": {
+    "publish": [{
+      "provider": "github",
+      "owner": "qishibo",
+      "repo": "github-action-test",
+      "releaseType": "prerelease"
+    }],
+  },
   "dependencies": {
     "element-ui": "^2.4.11",
     "font-awesome": "^4.7.0",
