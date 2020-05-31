@@ -32,7 +32,7 @@
       "owner": "qishibo",
       "repo": "github-action-test",
       "releaseType": "prerelease"
-    }],
+    }]
   },
   "dependencies": {
     "element-ui": "^2.4.11",
