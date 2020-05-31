@@ -12,7 +12,8 @@
   "publish": [{
     "provider": "github",
     "owner": "qishibo",
-    "repo": "github-action-test"
+    "repo": "github-action-test",
+    "releaseType": "prerelease"
   }],
   "repository": "github:qishibo/github-action-test",
   "build": {
