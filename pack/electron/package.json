@@ -14,7 +14,7 @@
     "appId": "me.qii404.another-redis-desktop-manager",
     "productName": "Another Redis Desktop Manager",
     "artifactName": "${productName}.${version}.${ext}",
-    "githubArtifactName": "${productName}.${version}.${ext}",
+    "productName": "${productName}.${version}.${ext}",
     "copyright": "Copyright © 2020 qii404.me",
     "asar": true,
     "directories": {
