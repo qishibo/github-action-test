@@ -25,9 +25,6 @@
       "!static/js/*.map",
       "!static/css/*.map"
     ],
-    "releaseInfo": {
-      "releaseName": "releaseName a a a a a.....${ext}"
-    },
     "publish": [{
       "provider": "github",
       "owner": "qishibo",
