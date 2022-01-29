@@ -1,25 +1,17 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: build_mac
 
 on:
   release:
     types: [published]
-  # push:
-    # branches:
-    # - master
 
 jobs:
   build:
 
     runs-on: macos-latest
-    # runs-on: macos-10.15
-    # runs-on: windows-latest
 
     strategy:
       matrix:
-        node-version: [15.14]
+        node-version: [14.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -27,12 +19,16 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-#     - run: sudo apt-get install libfontconfig1-dev
-    - run: npm ci --legacy-peer-deps
-#     - run: npm install --production
-#     - run: npm audit fix
+    - run: npm ci
     - run: npm run pack:prepare
-    - run: npm run pack:mac
-    # - run: npm run pack:win
+    - run: npm run pack:macm1:publish
       env:
         GH_TOKEN: ${{secrets.GH_TOKEN}}
+        CSC_LINK: ${{secrets.CSC_LINK}}
+        CSC_KEY_PASSWORD: ${{secrets.CSC_KEY_PASSWORD}}
+    - run: npm run pack:mac:publish
+      env:
+        GH_TOKEN: ${{secrets.GH_TOKEN}}
+        CSC_LINK: ${{secrets.CSC_LINK}}
+        CSC_KEY_PASSWORD: ${{secrets.CSC_KEY_PASSWORD}}
+

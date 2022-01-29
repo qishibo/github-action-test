@@ -1,24 +1,17 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: build_windows
 
 on:
   release:
     types: [published]
-  # push:
-  #   branches:
-  #   - master
 
 jobs:
   build:
 
-#     runs-on: ubuntu-16.04
     runs-on: windows-latest
 
     strategy:
       matrix:
-        node-version: [15.14]
+        node-version: [14.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,12 +19,9 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-#     - run: sudo apt-get install libfontconfig1-dev
-    - run: npm ci --legacy-peer-deps
-#     - run: npm install --production
-#     - run: npm audit fix
+    - run: npm ci
     - run: npm run pack:prepare
-#     - run: npm run pack:linux
-    - run: npm run pack:win
+    - run: npm run pack:win:publish
       env:
         GH_TOKEN: ${{secrets.GH_TOKEN}}
+
