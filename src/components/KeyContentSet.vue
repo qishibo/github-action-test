@@ -2,18 +2,17 @@
   <div>
     <div>
       <!-- add button -->
-      <el-form :inline="true" size="small">
+      <el-form :inline="true">
         <el-form-item>
-          <el-button size="small" type="primary" @click="showEditDialog({})">{{ $t('message.add_new_line') }}</el-button>
+          <el-button type="primary" @click="showEditDialog({})">{{ $t('message.add_new_line') }}</el-button>
         </el-form-item>
       </el-form>
 
       <!-- edit & add dialog -->
-      <el-dialog :title="dialogTitle" :visible.sync="editDialog">
+      <el-dialog :title="dialogTitle" :visible.sync="editDialog" @open='openDialog' :close-on-click-modal='false'>
         <el-form>
           <el-form-item label="Value">
-            <span v-if='editLineItem.binary' class='content-binary'>Hex</span>
-            <el-input type="textarea" :rows="6" v-model="editLineItem.value" autocomplete="off"></el-input>
+            <FormatViewer ref='formatViewer' :redisKey="redisKey" :dataMap="editLineItem" :content='editLineItem.value'></FormatViewer>
           </el-form-item>
         </el-form>
 
@@ -27,8 +26,8 @@
     <!-- content table -->
     <el-table
       stripe
-      size="small"
       border
+      size='mini'
       min-height=300
       :data="setData">
       <el-table-column
@@ -43,6 +42,9 @@
         sortable
         show-overflow-tooltip
         label="Value">
+        <template slot-scope="scope">
+          {{ $util.cutString($util.bufToString(scope.row.value), 1000) }}
+        </template>
       </el-table-column>
 
       <el-table-column label="Operation">
@@ -55,8 +57,10 @@
           <i :class='loadingIcon'></i>
         </template>
         <template slot-scope="scope">
-          <el-button type="text" @click="showEditDialog(scope.row)" icon="el-icon-edit" circle></el-button>
-          <el-button type="text" @click="deleteLine(scope.row)" icon="el-icon-delete" circle></el-button>
+          <el-button type="text" @click="$util.copyToClipboard(scope.row.value)" icon="el-icon-document" :title="$t('message.copy')"></el-button>
+          <el-button type="text" @click="showEditDialog(scope.row)" icon="el-icon-edit" :title="$t('message.edit_line')"></el-button>
+          <el-button type="text" @click="deleteLine(scope.row)" icon="el-icon-delete" :title="$t('el.upload.delete')"></el-button>
+          <el-button type="text" @click="dumpCommand(scope.row)" icon="fa fa-code" :title="$t('message.dump_to_clipboard')"></el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -72,11 +76,15 @@
         {{ $t('message.load_more_keys') }}
       </el-button>
     </div>
+
+    <ScrollToTop></ScrollToTop>
   </div>
 </template>
 
 <script>
 import PaginationTable from '@/components/PaginationTable';
+import FormatViewer from '@/components/FormatViewer';
+import ScrollToTop from '@/components/ScrollToTop';
 
 export default {
   data() {
@@ -96,7 +104,7 @@ export default {
     };
   },
   props: ['client', 'redisKey'],
-  components: {PaginationTable},
+  components: {PaginationTable, FormatViewer, ScrollToTop},
   computed: {
     dialogTitle() {
       return this.beforeEditItem.value ? this.$t('message.edit_line') :
@@ -123,7 +131,7 @@ export default {
     initTotal() {
       this.client.scard(this.redisKey).then((reply) => {
         this.total = reply;
-      });
+      }).catch(e => {});
     },
     resetTable() {
       this.setData = [];
@@ -145,8 +153,8 @@ export default {
 
         for (const i of reply) {
           setData.push({
-            value: this.$util.bufToString(i),
-            binary: !this.$util.bufVisible(i),
+            value: i,
+            // valueDisplay: this.$util.bufToString(i),
           });
         }
 
@@ -163,30 +171,56 @@ export default {
         this.loadingIcon = '';
         this.loadMoreDisable = true;
       });
+
+      this.scanStream.on('error', e => {
+        this.loadingIcon = '';
+        this.loadMoreDisable = true;
+        this.$message.error(e.message);
+      });
     },
     getScanMatch() {
       return this.filterValue ? `*${this.filterValue}*` : '*';
     },
+    openDialog() {
+      // this.$nextTick(() => {
+      //   this.$refs.formatViewer.autoFormat();
+      // });
+    },
     showEditDialog(row) {
       this.editLineItem = row;
-      this.beforeEditItem = JSON.parse(JSON.stringify(row));
+      this.beforeEditItem = this.$util.cloneObjWithBuff(row);
       this.editDialog = true;
+    },
+    dumpCommand(item) {
+      const lines = item ? [item] : this.setData;
+      const params = lines.map(line => {
+        return this.$util.bufToQuotation(line.value);
+      });
+
+      const command = `SADD ${this.$util.bufToQuotation(this.redisKey)} ${params.join(' ')}`;
+      this.$util.copyToClipboard(command);
+      this.$message.success({message: this.$t('message.copy_success'), duration: 800});
     },
     editLine() {
       const key = this.redisKey;
       const client = this.client;
       const before = this.beforeEditItem;
-      const after = this.editLineItem;
+      const afterValue = this.$refs.formatViewer.getContent();
 
-      this.editDialog = false;
-
-      if (!after.value || before.value == after.value) {
+      if (!afterValue) {
         return;
       }
 
+      // not changed
+      if (before.value && before.value.equals(afterValue)) {
+        return this.editDialog = false;
+      }
+
+      this.editDialog = false;
+
       client.sadd(
         key,
-        before.binary ? this.$util.xToBuffer(after.value) : after.value
+        afterValue
       ).then((reply) => {
         // add success
         if (reply === 1) {
@@ -194,7 +228,7 @@ export default {
           if (before.value) {
             client.srem(
               key,
-              before.binary ? this.$util.xToBuffer(before.value) : before.value
+              before.value
             ).then((reply) => {
               this.initShow();
             });
@@ -217,7 +251,7 @@ export default {
             duration: 1000,
           });
         }
-      });
+      }).catch(e => {this.$message.error(e.message);});
     },
     deleteLine(row) {
       this.$confirm(
@@ -226,7 +260,7 @@ export default {
       ).then(() => {
         this.client.srem(
           this.redisKey,
-          row.binary ? this.$util.xToBuffer(row.value) : row.value
+          row.value
         ).then((reply) => {
           if (reply === 1) {
             this.$message.success({
@@ -236,7 +270,7 @@ export default {
 
             this.initShow();
           }
-        });
+        }).catch(e => {this.$message.error(e.message);});
       }).catch(() => {});
     },
   },

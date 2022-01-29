@@ -2,23 +2,21 @@
   <div>
     <div>
       <!-- add button -->
-      <el-form :inline="true" size="small">
+      <el-form :inline="true">
         <el-form-item>
-          <el-button size="small" type="primary" @click='showEditDialog({})'>{{ $t('message.add_new_line') }}</el-button>
+          <el-button type="primary" @click='showEditDialog({})'>{{ $t('message.add_new_line') }}</el-button>
         </el-form-item>
       </el-form>
 
       <!-- edit & add dialog -->
-      <el-dialog :title='dialogTitle' :visible.sync="editDialog" @open='openDialog'>
+      <el-dialog :title='dialogTitle' :visible.sync="editDialog" @open='openDialog' :close-on-click-modal='false'>
         <el-form>
           <el-form-item label="Field">
-            <span v-if='editLineItem.binaryK' class='content-binary'>Hex</span>
-            <el-input v-model="editLineItem.key" autocomplete="off"></el-input>
+            <InputBinary :content.sync="editLineItem.key"></InputBinary>
           </el-form-item>
 
           <el-form-item label="Value">
-            <span v-if='editLineItem.binaryV' class='content-binary'>Hex</span>
-            <FormatViewer ref='formatViewer' :content.sync='editLineItem.value'></FormatViewer>
+            <FormatViewer ref='formatViewer' :redisKey="redisKey" :dataMap="editLineItem" :content='editLineItem.value'></FormatViewer>
           </el-form-item>
         </el-form>
 
@@ -32,8 +30,8 @@
     <!-- content table -->
     <el-table
       stripe
-      size="small"
       border
+      size='mini'
       min-height=300
       :data="hashData">
       <el-table-column
@@ -47,16 +45,20 @@
         sortable
         resizable
         label="Key"
-        width=150
-        >
+        width=150>
+        <template slot-scope="scope">
+          {{ $util.bufToString(scope.row.key) }}
+        </template>
       </el-table-column>
       <el-table-column
         prop="value"
         resizable
         sortable
         show-overflow-tooltip
-        label="Value"
-        >
+        label="Value">
+        <template slot-scope="scope">
+          {{ $util.cutString($util.bufToString(scope.row.value), 1000) }}
+        </template>
       </el-table-column>
 
       <el-table-column label="Operation">
@@ -69,8 +71,10 @@
           <i :class='loadingIcon'></i>
         </template>
         <template slot-scope="scope">
-          <el-button type="text" @click="showEditDialog(scope.row)" icon="el-icon-edit" circle></el-button>
-          <el-button type="text" @click="deleteLine(scope.row)" icon="el-icon-delete" circle></el-button>
+          <el-button type="text" @click="$util.copyToClipboard(scope.row.value)" icon="el-icon-document" :title="$t('message.copy')"></el-button>
+          <el-button type="text" @click="showEditDialog(scope.row)" icon="el-icon-edit" :title="$t('message.edit_line')"></el-button>
+          <el-button type="text" @click="deleteLine(scope.row)" icon="el-icon-delete" :title="$t('el.upload.delete')"></el-button>
+          <el-button type="text" @click="dumpCommand(scope.row)" icon="fa fa-code" :title="$t('message.dump_to_clipboard')"></el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -86,12 +90,16 @@
         {{ $t('message.load_more_keys') }}
       </el-button>
     </div>
+
+    <ScrollToTop></ScrollToTop>
   </div>
 </template>
 
 <script>
 import PaginationTable from '@/components/PaginationTable';
 import FormatViewer from '@/components/FormatViewer';
+import InputBinary from '@/components/InputBinary';
+import ScrollToTop from '@/components/ScrollToTop';
 
 export default {
   data() {
@@ -110,7 +118,7 @@ export default {
       loadMoreDisable: false,
     };
   },
-  components: {PaginationTable, FormatViewer},
+  components: {PaginationTable, FormatViewer, InputBinary, ScrollToTop},
   props: ['client', 'redisKey'],
   computed: {
     dialogTitle() {
@@ -138,7 +146,7 @@ export default {
     initTotal() {
       this.client.hlen(this.redisKey).then((reply) => {
         this.total = reply;
-      });
+      }).catch(e => {});
     },
     resetTable() {
       this.hashData = [];
@@ -160,10 +168,10 @@ export default {
 
         for (let i = 0; i < reply.length; i += 2) {
           hashData.push({
-            key: this.$util.bufToString(reply[i]),
-            value: this.$util.bufToString(reply[i + 1]),
-            binaryK: !this.$util.bufVisible(reply[i]),
-            binaryV: !this.$util.bufVisible(reply[i + 1]),
+            key: reply[i],
+            // keyDisplay: this.$util.bufToString(reply[i]),
+            value: reply[i + 1],
+            // valueDisplay: this.$util.bufToString(reply[i + 1]),
           });
         }
 
@@ -180,42 +188,61 @@ export default {
         this.loadingIcon = '';
         this.loadMoreDisable = true;
       });
+
+      this.scanStream.on('error', e => {
+        this.loadingIcon = '';
+        this.loadMoreDisable = true;
+        this.$message.error(e.message);
+      });
     },
     getScanMatch() {
       return this.filterValue ? `*${this.filterValue}*` : '*';
     },
     openDialog() {
-      this.$nextTick(() => {
-        this.$refs.formatViewer.autoFormat();
-      });
+      // this.$nextTick(() => {
+      //   this.$refs.formatViewer.autoFormat();
+      // });
     },
     showEditDialog(row) {
       this.editLineItem = row;
-      this.beforeEditItem = JSON.parse(JSON.stringify(row));
+      this.beforeEditItem = this.$util.cloneObjWithBuff(row);
       this.editDialog = true;
+    },
+    dumpCommand(item) {
+      const lines = item ? [item] : this.hashData;
+      const params = lines.map(line => {
+        return `${this.$util.bufToQuotation(line.key)} ` +
+               this.$util.bufToQuotation(line.value);
+      });
+
+      const command = `HMSET ${this.$util.bufToQuotation(this.redisKey)} ${params.join(' ')}`;
+      this.$util.copyToClipboard(command);
+      this.$message.success({message: this.$t('message.copy_success'), duration: 800});
     },
     editLine() {
       const key = this.redisKey;
       const client = this.client;
       const before = this.beforeEditItem;
-      const after = this.editLineItem;
 
-      this.editDialog = false;
+      const afterKey = this.editLineItem.key;
+      const afterValue = this.$refs.formatViewer.getContent();
 
-      if (!after.key || !after.value) {
+      if (!afterKey || !afterValue) {
         return;
       }
 
+      this.editDialog = false;
+
       client.hset(
         key,
-        before.binaryK ? this.$util.xToBuffer(after.key) : after.key,
-        before.binaryV ? this.$util.xToBuffer(after.value) : after.value
+        afterKey,
+        afterValue
       ).then((reply) => {
         // edit key && key changed
-        if (before.key && before.key !== after.key) {
+        if (before.key && !before.key.equals(afterKey)) {
           client.hdel(
             key,
-            before.binaryK ? this.$util.xToBuffer(before.key) : before.key
+            before.key
           ).then((reply) => {
             this.initShow();
           });
@@ -230,7 +257,7 @@ export default {
           message: reply ? this.$t('message.add_success') : this.$t('message.modify_success'),
           duration: 1000,
         });
-      });
+      }).catch(e => {this.$message.error(e.message);});
     },
     deleteLine(row) {
       this.$confirm(
@@ -239,7 +266,7 @@ export default {
       ).then(() => {
         this.client.hdel(
           this.redisKey,
-          row.binaryK ? this.$util.xToBuffer(row.key) : row.key
+          row.key
         ).then((reply) => {
           if (reply === 1) {
             this.$message.success({
@@ -249,7 +276,7 @@ export default {
 
             this.initShow();
           }
-        });
+        }).catch(e => {this.$message.error(e.message);});
       }).catch(() => {});
     },
   },

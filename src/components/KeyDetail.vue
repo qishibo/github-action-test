@@ -8,6 +8,8 @@
         :redisKey="redisKey"
         :keyType="keyType"
         @refreshContent='refreshContent'
+        @dumpCommand='dumpCommand'
+        :hotKeyScope='hotKeyScope'
         class="key-header-info">
       </KeyHeader>
 
@@ -17,6 +19,7 @@
         :is="componentName"
         :client='client'
         :redisKey="redisKey"
+        :hotKeyScope='hotKeyScope'
         class="key-content-container">
       </component>
     </el-container>
@@ -30,14 +33,17 @@ import KeyContentHash from '@/components/KeyContentHash';
 import KeyContentSet from '@/components/KeyContentSet';
 import KeyContentZset from '@/components/KeyContentZset';
 import KeyContentList from '@/components/KeyContentList';
+import KeyContentStream from '@/components/KeyContentStream';
+import KeyContentReJson from '@/components/KeyContentReJson';
 
 export default {
   data() {
     return {};
   },
-  props: ['client', 'redisKey', 'keyType'],
+  props: ['client', 'redisKey', 'keyType', 'hotKeyScope'],
   components: {
-    KeyHeader, KeyContentString, KeyContentHash, KeyContentSet, KeyContentZset, KeyContentList
+    KeyHeader, KeyContentString, KeyContentHash, KeyContentSet, KeyContentZset,
+    KeyContentList, KeyContentStream, KeyContentReJson
   },
   computed: {
     componentName() {
@@ -52,12 +58,33 @@ export default {
         zset  : 'KeyContentZset',
         set   : 'KeyContentSet',
         list  : 'KeyContentList',
+        stream  : 'KeyContentStream',
+        stream  : 'KeyContentStream',
+        'ReJSON-RL': 'KeyContentReJson',
       };
 
-      return map[keyType];
+      if (map[keyType]) {
+        return map[keyType];
+      }
+      // type not support, such as bf
+      else {
+        this.$message.error(this.$t('message.key_type_not_support'));
+        return '';
+      }
     },
     refreshContent() {
-      this.$refs.keyContent.initShow();
+      this.client.exists(this.redisKey).then(reply => {
+        if (!reply) {
+          return this.$message.error(this.$t('message.key_not_exists'));
+        }
+
+        this.$refs.keyContent && this.$refs.keyContent.initShow();
+      }).catch(e => {
+        this.$message.error('Exists Error: ' + e.message);
+      });
+    },
+    dumpCommand() {
+      this.$refs.keyContent && this.$refs.keyContent.dumpCommand();
     },
   },
 };
@@ -65,7 +92,7 @@ export default {
 
 <style type="text/css">
   .key-tab-container {
-    padding-left: 5px;
+    /*padding-left: 5px;*/
   }
   .key-header-info {
     margin-top: 15px;
@@ -82,12 +109,6 @@ export default {
   /*tooltip in table width limit*/
   .el-tooltip__popper {
     max-width: 50%;
-  }
-
-  .content-binary {
-    color: #7ab3ef;
-    font-size: 80%;
-    float: left;
   }
 
   .content-more-container {
