@@ -29,7 +29,7 @@
     "publish": [{
       "provider": "github",
       "owner": "qishibo",
-      "repo": "AnotherRedisDesktopManager",
+      "repo": "github-action-test",
       "releaseType": "prerelease"
     }],
     "win": {

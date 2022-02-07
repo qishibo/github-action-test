@@ -143,9 +143,7 @@ if (process.platform === 'darwin') {
     {
       label: 'View',
       submenu: [
-        ...(
-          (APP_ENV === 'production') ? [] : [{ role: 'toggledevtools' }]
-        ),
+        { role: 'toggledevtools' },
         { role: 'togglefullscreen' }
       ]
     },
