@@ -7,12 +7,13 @@
       :client="client"
       :keyList="keyList">
     </component>
-    
+
     <div class='keys-load-more-wrapper'>
       <!-- load more -->
       <el-button
         ref='scanMoreBtn'
         class='load-more-keys'
+        :icon="searching && !loadingAll ? 'el-icon-loading' : ''"
         :disabled='scanMoreDisabled || searching'
         @click='refreshKeyList(false)'>
         {{ $t('message.load_more_keys') }}
@@ -27,7 +28,7 @@
         <el-button
           class='load-more-keys'
           type= 'danger'
-          :icon="searching ? 'el-icon-loading' : ''"
+          :icon="searching && loadingAll ? 'el-icon-loading' : ''"
           :disabled='searching'
           @click='loadAllKeys()'>
           {{ $t('message.load_all_keys') }}
@@ -38,14 +39,13 @@
 </template>
 
 <script type="text/javascript">
-import KeyListTree from '@/components/KeyListTree';
-import KeyListNormal from '@/components/KeyListNormal';
+import KeyListVirtualTree from '@/components/KeyListVirtualTree';
 
 export default {
   data() {
     return {
       keyList: [],
-      keyListType: 'KeyListTree',
+      keyListType: 'KeyListVirtualTree',
       searchPageSize: 10000,
       scanStreams: [],
       scanningCount: 0,
@@ -54,16 +54,19 @@ export default {
       onePageFinishedCount: 0,
       firstPageFinished: false,
       loadAllTooltip: true,
+      loadingAll: false,
     };
   },
   props: ['client', 'config', 'globalSettings'],
-  components: {KeyListTree, KeyListNormal},
+  components: {KeyListVirtualTree},
   computed: {
     keysPageSize() {
       let keysPageSize = parseInt(this.globalSettings['keysPageSize']);
       return keysPageSize ? keysPageSize : 500;
     },
     showLoadAllKeys(){
+      // force show
+      return true;
       return this.globalSettings['showLoadAllKeys'];
     },
     searching() {
@@ -124,6 +127,7 @@ export default {
     },
     loadAllKeys(){
       this.resetKeyList();
+      this.loadingAll = true;
       this.$parent.$parent.$parent.$refs.operateItem.searchIcon = 'el-icon-loading';
       this.initScanStreamsAndScan(true);
     },
@@ -151,8 +155,6 @@ export default {
           if (this.onePageList.length >= keysPageSize && loadAll === false) {
             // temp stop
             stream.pause();
-            // search input icon recover
-            this.$parent.$parent.$parent.$refs.operateItem.searchIcon = 'el-icon-search';
 
             // last node refresh keylist
             if (++this.onePageFinishedCount >= this.scanningCount) {
@@ -165,12 +167,15 @@ export default {
 
               // this page key list append to raw key list
               this.keyList = this.keyList.concat(this.onePageList);
+              // search input icon recover
+              this.$parent.$parent.$parent.$refs.operateItem.searchIcon = 'el-icon-search';
             }
           }
         });
 
         stream.on('error', (e) => {
           this.$parent.$parent.$parent.$refs.operateItem.searchIcon = 'el-icon-search';
+          this.loadingAll = false;
 
           // scan command disabled, other functions may be used normally
           if (
@@ -211,6 +216,7 @@ export default {
             this.scanMoreDisabled = true;
             // search input icon recover
             this.$parent.$parent.$parent.$refs.operateItem.searchIcon = 'el-icon-search';
+            this.loadingAll = false;
           }
         });
       });
@@ -230,7 +236,7 @@ export default {
       const match = this.getMatchMode(false);
 
       this.client.exists(match).then((reply) => {
-        this.keyList = (reply === 1) ? [Buffer.from(match)] : [];
+        this.keyList = (reply == 1) ? [Buffer.from(match)] : [];
       }).catch(e => {
         this.$message.error(e.message);
       });
@@ -283,10 +289,6 @@ export default {
     },
   },
   watch: {
-    config(newConfig) {
-      // separator changes
-      // this.keyListType = newConfig.separator === '' ? 'KeyListNormal' : 'KeyListTree';
-    },
     globalSettings(newSetting, oldSetting) {
       if (!this.client) {
         return;

@@ -1,22 +1,38 @@
-import Redis from 'ioredis';
+import Redis from '@qii404/ioredis';
 import tunnelssh from 'tunnel-ssh';
 import vue from '@/main.js';
 import {remote} from 'electron';
+import {writeCMD} from '@/commands.js';
 
 const fs = require('fs');
 const { sendCommand } = Redis.prototype;
 
 // redis command log
-Redis.prototype.sendCommand = async function (...options) {
+Redis.prototype.sendCommand = function (...options) {
+  const command = options[0];
+
+  // readonly mode
+  if (this.options.connectionReadOnly && writeCMD[command.name.toUpperCase()]) {
+    command.reject(new Error("You are in readonly mode! Unable to execute write command!"));
+    return command.promise;
+  }
+
+  // exec directly, without logs
+  if (this.withoutLogging === true) {
+    // invalid in next calling
+    this.withoutLogging = false;
+    return sendCommand.apply(this, options);
+  }
+
   const start = performance.now();
-  const response = await sendCommand.call(this, ...options);
+  const response = sendCommand.apply(this, options);
   const cost = performance.now() - start;
 
-  const record = {time: new Date(), connectionName: this.options.connectionName, command: options[0], cost: cost};
+  const record = {time: new Date(), connectionName: this.options.connectionName, command: command, cost: cost};
   vue.$bus.$emit('commandLog', record);
 
   return response;
-}
+};
 
 // fix ioredis hgetall key has been toString()
 Redis.Command.setReplyTransformer("hgetall", (result) => {
@@ -177,6 +193,9 @@ export default {
       // ACL support
       username: config.username ? config.username : undefined,
       tls: config.sslOptions ? this.getTLSOptions(config.sslOptions) : undefined,
+      connectionReadOnly: config.connectionReadOnly ? true : undefined,
+      // return int as string to avoid big number issues
+      stringNumbers: true,
     };
   },
 

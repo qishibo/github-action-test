@@ -48,6 +48,7 @@ import ViewerDeflate from '@/components/ViewerDeflate';
 import ViewerMsgpack from '@/components/ViewerMsgpack';
 import ViewerOverSize from '@/components/ViewerOverSize';
 import ViewerCustom from '@/components/ViewerCustom';
+import ViewerProtobuf from '@/components/ViewerProtobuf';
 
 export default {
   data() {
@@ -64,15 +65,17 @@ export default {
         { value: 'ViewerBrotli', text: 'Brotli' },
         { value: 'ViewerGzip', text: 'Gzip' },
         { value: 'ViewerDeflate', text: 'Deflate' },
+        { value: 'ViewerProtobuf', text: 'Protobuf' },
       ],
       selectStyle: {
         float: this.float,
       },
       overSizeBytes: 20971520, // 20MB
+      autoFormated: false,
     };
   },
   components: {ViewerText, ViewerHex, ViewerJson, ViewerBinary, ViewerUnserialize, ViewerMsgpack,
-    ViewerOverSize, ViewerCustom, ViewerBrotli, ViewerGzip, ViewerDeflate},
+    ViewerOverSize, ViewerCustom, ViewerBrotli, ViewerGzip, ViewerDeflate, ViewerProtobuf},
   props: {
     float: {default: 'right'},
     content: {default: () => Buffer.from('')},
@@ -113,7 +116,13 @@ export default {
   },
   watch: {
     content() {
+      // auto format only when first in #920
+      if (this.autoFormated) {
+        return;
+      }
+
       this.autoFormat();
+      this.autoFormated = true;
     },
     selectedView(viewer) {
       // custom viewer com may same, force change
@@ -172,6 +181,12 @@ export default {
       else if (this.$util.isDeflate(this.content)) {
         return this.changeViewer('Deflate');
       }
+      // protobuf
+      else if (this.$util.isProtobuf(this.content)) {
+        return this.changeViewer('Protobuf');
+      }
+
+
       // hex
       else if (!this.contentVisible) {
         return this.changeViewer('Hex');

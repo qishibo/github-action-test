@@ -58,8 +58,8 @@
         </template>
         <template slot-scope="scope">
           <el-button type="text" @click="$util.copyToClipboard(scope.row.value)" icon="el-icon-document" :title="$t('message.copy')"></el-button>
-          <el-button type="text" @click="showEditDialog(scope.row, scope.$index)" icon="el-icon-edit" :title="$t('message.edit_line')"></el-button>
-          <el-button type="text" @click="deleteLine(scope.row, scope.$index)" icon="el-icon-delete" :title="$t('el.upload.delete')"></el-button>
+          <el-button type="text" @click="showEditDialog(scope.row)" icon="el-icon-edit" :title="$t('message.edit_line')"></el-button>
+          <el-button type="text" @click="deleteLine(scope.row)" icon="el-icon-delete" :title="$t('el.upload.delete')"></el-button>
           <el-button type="text" @click="dumpCommand(scope.row)" icon="fa fa-code" :title="$t('message.dump_to_clipboard')"></el-button>
         </template>
       </el-table-column>
@@ -96,7 +96,7 @@ export default {
       beforeEditItem: {},
       editLineItem: {},
       loadingIcon: '',
-      pageSize: 30,
+      pageSize: 200,
       searchPageSize: 1000,
       oneTimeListLength: 0,
       scanStream: null,
@@ -134,6 +134,8 @@ export default {
       }).catch(e => {});
     },
     resetTable() {
+      // stop scanning first, #815
+      this.scanStream && this.scanStream.pause();
       this.setData = [];
       this.scanStream = null;
       this.oneTimeListLength = 0;
@@ -155,6 +157,7 @@ export default {
           setData.push({
             value: i,
             // valueDisplay: this.$util.bufToString(i),
+            uniq: Math.random(),
           });
         }
 
@@ -182,16 +185,16 @@ export default {
       return this.filterValue ? `*${this.filterValue}*` : '*';
     },
     openDialog() {
-      // this.$nextTick(() => {
-      //   this.$refs.formatViewer.autoFormat();
-      // });
+      this.$nextTick(() => {
+        this.$refs.formatViewer.autoFormat();
+      });
     },
-    showEditDialog(row, index = undefined) {
+    showEditDialog(row) {
       this.editLineItem = row;
       this.beforeEditItem = this.$util.cloneObjWithBuff(row);
       this.editDialog = true;
 
-      this.rowIndex = index;
+      this.rowUniq = row.uniq;
     },
     dumpCommand(item) {
       const lines = item ? [item] : this.setData;
@@ -225,20 +228,22 @@ export default {
         afterValue
       ).then((reply) => {
         // add success
-        if (reply === 1) {
+        if (reply == 1) {
           // edit key remove previous value
           if (before.value) {
             client.srem(key, before.value);
           }
 
           // this.initShow(); // do not reinit, #786
+          const newLine = {value: afterValue, uniq: Math.random()};
           // edit line
-          if (typeof this.rowIndex === 'number') {
-            this.setData.splice(this.rowIndex, 1, {value: afterValue})
+          if (this.rowUniq) {
+            this.$util.listSplice(this.setData, this.rowUniq, newLine);
           }
           // new line
           else {
-            this.setData.push({value: afterValue});
+            this.setData.push(newLine);
+            this.total++;
           }
 
           this.$message.success({
@@ -248,7 +253,7 @@ export default {
         }
 
         // value exists
-        else if (reply === 0) {
+        else if (reply == 0) {
           this.$message.error({
             message: this.$t('message.value_exists'),
             duration: 1000,
@@ -256,7 +261,7 @@ export default {
         }
       }).catch(e => {this.$message.error(e.message);});
     },
-    deleteLine(row, index = undefined) {
+    deleteLine(row) {
       this.$confirm(
         this.$t('message.confirm_to_delete_row_data'),
         { type: 'warning' }
@@ -265,14 +270,15 @@ export default {
           this.redisKey,
           row.value
         ).then((reply) => {
-          if (reply === 1) {
+          if (reply == 1) {
             this.$message.success({
               message: this.$t('message.delete_success'),
               duration: 1000,
             });
 
             // this.initShow(); // do not reinit, #786
-            (typeof index === 'number') && this.setData.splice(index, 1);
+            this.$util.listSplice(this.setData, row.uniq);
+            this.total--;
           }
         }).catch(e => {this.$message.error(e.message);});
       }).catch(() => {});

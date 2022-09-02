@@ -3,14 +3,17 @@
   <el-form @submit.native.prevent>
     <el-form-item>
       <!-- content textarea -->
-      <el-input
+      <!-- <el-input
         ref="cliContent"
         type="textarea"
-        v-model="content"
+        :value="contentStr"
         rows='22'
         :disabled="true"
+        :readonly="true"
         id='cli-content'>
-      </el-input>
+      </el-input> -->
+
+      <CliContent ref="editor" :content="contentStr"></CliContent>
 
       <!-- input params -->
       <el-autocomplete
@@ -18,7 +21,7 @@
         autocomplete="off"
         v-model="params"
         :debounce='10'
-        :disabled='subscribeMode'
+        :disabled='subscribeMode || monitorMode'
         :fetch-suggestions="inputSuggestion"
         :placeholder="$t('message.enter_to_exec')"
         :select-when-unmatched="true"
@@ -34,27 +37,31 @@
   </el-form>
 
   <el-button v-if='subscribeMode' @click='stopSubscribe' type='danger' class='stop-subscribe'>Stop Subscribe</el-button>
+  <el-button v-else-if='monitorMode' @click='stopMonitor' type='danger' class='stop-subscribe'>Stop Monitor</el-button>
 </div>
 </template>
 
 <script type="text/javascript">
-import rawCommand from '@/rawCommand';
-import cmdTips from '@/cmds';
+import { allCMD } from '@/commands';
 import splitargs from '@qii404/redis-splitargs';
 import { ipcRenderer } from 'electron';
+import CliContent from '@/components/CliContent';
 
 export default {
   data() {
     return {
       params: '',
-      content: '',
+      content: [],
       historyIndex: 0,
       inputSuggestionItems: [],
       multiQueue: null,
       subscribeMode: false,
+      monitorMode: false,
+      maxHistory: 2000,
     };
   },
   props: ['client', 'hotKeyScope'],
+  components: { CliContent },
   computed: {
     paramsTrim() {
       return this.params.replace(/^\s+|\s+$/g, '');
@@ -71,7 +78,15 @@ export default {
       catch(e) {
         return [this.paramsTrim];
       }
-    }
+    },
+    contentStr() {
+      if (this.content.length > this.maxHistory) {
+        // this.content = this.content.slice(-this.maxHistory);
+        this.content.splice(0, this.content.length - this.maxHistory);
+      }
+
+      return this.content.join("\n") + "\n";
+    },
   },
   created() {
     this.$bus.$on('changeDb', (client, dbIndex) => {
@@ -107,7 +122,7 @@ export default {
       });
     },
     initCliContent() {
-      this.content += `> ${this.anoClient.options.connectionName} connected!\n`;
+      this.content.push(`\n> ${this.anoClient.options.connectionName} connected!`);
       this.scrollToBottom();
     },
     tabClick() {
@@ -124,12 +139,12 @@ export default {
         return;
       }
 
-      const items = this.inputSuggestionItems.filter(function (item) {
+      let items = this.inputSuggestionItems.filter(function (item) {
         return item.toLowerCase().indexOf(input.toLowerCase()) !== -1;
       });
 
       // add cmd tips
-      this.addCMDTips(items);
+      items = this.addCMDTips(items);
 
       const suggestions = [...new Set(items)].map(function (item) {
         return {value: item};
@@ -143,23 +158,25 @@ export default {
       const cmd = paramsArr[0].toUpperCase();
 
       if (!cmd) {
-        return;
+        return items;
       }
 
-      for (var i = cmdTips.length - 1; i >= 0; i--) {
-        // cmd with param such as 'hget hhh'
-        if (paramsLen > 1) {
-          if (cmdTips[i].split(' ')[0] === cmd) {
-            items.unshift(cmdTips[i]);
+      for (const key in allCMD) {
+        if (key.startsWith(cmd)) {
+          const tip = allCMD[key];
+          // single tip
+          if (typeof tip === 'string') {
+            items.unshift(tip);
           }
-        }
-        // cmd without param such as 'hget'
-        else {
-          if (cmdTips[i].startsWith(cmd)) {
-            items.unshift(cmdTips[i]);
+
+          // with sub commands, such as CONFIG SET/GET...
+          else {
+            items = tip.concat(items);
           }
         }
       }
+
+      return items;
     },
     bindSubscribeMessage() {
       // bind subscribe message
@@ -183,12 +200,16 @@ export default {
       Object.keys(subSet.subscribe).length && this.anoClient.unsubscribe();
       Object.keys(subSet.psubscribe).length && this.anoClient.punsubscribe();
     },
+    stopMonitor() {
+      this.monitorMode = false;
+      this.monitorInstance && this.monitorInstance.disconnect();
+    },
     consoleExec() {
       const params = this.paramsTrim;
       const paramsArr = this.paramsArr;
 
       this.params = '';
-      this.content += `> ${params}\n`;
+      this.content.push(`> ${params}`);
 
       // append to history command
       this.appendToHistory(params);
@@ -198,7 +219,7 @@ export default {
       }
 
       if (params == 'clear') {
-        return this.content = '';
+        return this.content = [];
       }
 
       // multi-exec mode
@@ -216,10 +237,10 @@ export default {
 
         this.anoClient.multi(this.multiQueue).execBuffer((err, reply) => {
           if (err) {
-            this.content += `${err}\n`;
+            this.content.push(`${err}`);
           }
           else {
-            this.content += this.resolveResult(reply);
+            this.content.push(this.resolveResult(reply).trim());
           }
 
           this.scrollToBottom();
@@ -239,25 +260,30 @@ export default {
         this.subscribeMode = true;
       }
 
-      // normal command
-      let promise = rawCommand.exec(this.anoClient, paramsArr);
+      // monitor command
+      if (paramsArr[0].toLowerCase() == 'monitor') {
+        this.anoClient.monitor().then(monitor => {
+          this.monitorMode = true;
+          this.scrollToBottom('OK');
+          this.monitorInstance = monitor;
+          this.monitorInstance.on("monitor", (time, args, source, database) => {
+            this.scrollToBottom(`${time} [${database} ${source}] ${args.join(' ')}`);
+          });
+        });
 
-      // exec error
-      if (typeof promise == 'string') {
-        // fetal error in some cluster condition
-        if (promise == rawCommand.message.catchError) {
-          this.multiQueue = null;
-        }
-
-        return this.scrollToBottom(promise);
+        return;
       }
+
+      // normal command
+      let promise = this.anoClient.callBuffer(paramsArr[0].toLowerCase(), paramsArr.slice(1));
 
       // normal command promise
       promise.then((reply) => {
-        this.content += this.resolveResult(reply);
+        this.content.push(this.resolveResult(reply).trim());
         this.execFinished(paramsArr);
         this.scrollToBottom();
       }).catch((err) => {
+        this.multiQueue = null;
         this.scrollToBottom(err.message);
       });
     },
@@ -277,9 +303,17 @@ export default {
       }
     },
     scrollToBottom(append = '') {
-      append && (this.content += `${append}\n`);
+      append && (this.content.push(`${append}`));
 
       this.$nextTick(() => {
+        if (this.$refs.editor) {
+          return this.$refs.editor.scrollToBottom();
+        }
+        
+        if (!this.$refs.cliContent) {
+          return;
+        }
+
         const textarea = this.$refs.cliContent.$el.firstChild;
         textarea.scrollTop = textarea.scrollHeight;
       });
@@ -377,7 +411,7 @@ export default {
       //   (typeof this.cb == 'function') && this.cb([]);
       // });
       this.$shortcut.bind('ctrl+l, ⌘+l', this.hotKeyScope, () => {
-        this.content = '';
+        this.content = [];
       });
     },
     initHistoryTips() {
@@ -392,7 +426,7 @@ export default {
     },
     storeCommandTips() {
       const key = `cliTips_${this.client.options.connectionName}`;
-      localStorage.setItem(key, JSON.stringify(this.inputSuggestionItems.slice(-500)));
+      localStorage.setItem(key, JSON.stringify(this.inputSuggestionItems.slice(-200)));
     },
   },
   mounted() {

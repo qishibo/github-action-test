@@ -70,7 +70,7 @@
         <template slot-scope="scope">
           <el-button type="text" @click="$util.copyToClipboard(JSON.stringify(scope.row.content))" icon="el-icon-document" :title="$t('message.copy')"></el-button>
           <el-button type="text" @click="showEditDialog(scope.row)" icon="el-icon-view" :title="$t('message.detail')"></el-button>
-          <el-button type="text" @click="deleteLine(scope.row, scope.$index)" icon="el-icon-delete" :title="$t('el.upload.delete')"></el-button>
+          <el-button type="text" @click="deleteLine(scope.row)" icon="el-icon-delete" :title="$t('el.upload.delete')"></el-button>
           <el-button type="text" @click="dumpCommand(scope.row)" icon="fa fa-code" :title="$t('message.dump_to_clipboard')"></el-button>
         </template>
       </el-table-column>
@@ -103,7 +103,7 @@ export default {
       beforeEditItem: {},
       editLineItem: {},
       loadingIcon: '',
-      pageSize: 30,
+      pageSize: 200,
       loadMoreDisable: false,
       minId: '-',
       maxId: '+',
@@ -140,7 +140,7 @@ export default {
 
         for (let stream of reply) {
           let content = {};
-          let line = {id: stream[0], content: content};
+          let line = {id: stream[0], content: content, uniq: Math.random()};
           // add key value map
           for (var i = 0; i < stream[1].length; i+=2) {
             content[this.$util.bufToString(stream[1][i])] =
@@ -177,9 +177,9 @@ export default {
       this.loadMoreDisable = false;
     },
     openDialog() {
-      // this.$nextTick(() => {
-      //   this.$refs.formatViewer.autoFormat();
-      // });
+      this.$nextTick(() => {
+        this.$refs.formatViewer.autoFormat();
+      });
     },
     showEditDialog(row) {
       this.editLineItem = row;
@@ -241,7 +241,7 @@ export default {
         this.$message.error(e.message);
       });
     },
-    deleteLine(row, index = undefined) {
+    deleteLine(row) {
       this.$confirm(
         this.$t('message.confirm_to_delete_row_data'),
         {type: 'warning'}
@@ -250,14 +250,15 @@ export default {
           this.redisKey,
           row.id
         ).then((reply) => {
-          if (reply === 1) {
+          if (reply == 1) {
             this.$message.success({
               message: this.$t('message.delete_success'),
               duration: 1000,
             });
 
             // this.initShow(); // do not reinit, #786
-            (typeof index === 'number') && this.lineData.splice(index, 1);
+            this.$util.listSplice(this.lineData, row.uniq);
+            this.total--;
           }
         });
       }).catch(() => {});
