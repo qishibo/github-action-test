@@ -95,7 +95,7 @@ export default {
         }
 
         this.$notify.error({
-          message: message,
+          message: message + '   ' + error,
           duration: 0,
           dangerouslyUseHTMLString: true,
         });
