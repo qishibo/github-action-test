@@ -65,6 +65,6 @@
         "ElectronTeamID": "68JN8DV835"
       }
     },
-    "afterSign": "../scripts/notarize.js"
+    "afterSign": "../pack/scripts/notarize.js"
   }
 }
