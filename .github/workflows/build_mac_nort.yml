@@ -9,10 +9,6 @@ jobs:
 
     runs-on: macos-latest
 
-    strategy:
-      matrix:
-        node-version: [16]
-
     env:
       GH_TOKEN: ${{secrets.GH_TOKEN}}
       CSC_LINK: ${{secrets.CSC_LINK}}
@@ -29,13 +25,14 @@ jobs:
         p12-password: ${{secrets.CSC_KEY_PASSWORD}}
 
     - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 16
     - run: npm ci
     - run: npm run pack:prepare
     - run: npm run pack:mac:publish
+    - run: npm run pack:macm1:publish
 
     - name: Cleanup keychain
       if: always()
