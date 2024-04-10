@@ -1,4 +1,4 @@
-name: build_linux
+name: build_windows
 
 on:
   release:
@@ -7,20 +7,22 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     strategy:
       matrix:
-        node-version: [14]
+        node-version: [16]
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
     - run: npm run pack:prepare
-    - run: npm run pack:linux:publish
+    - run: npm run pack:win:publish
       env:
         GH_TOKEN: ${{secrets.GH_TOKEN}}
