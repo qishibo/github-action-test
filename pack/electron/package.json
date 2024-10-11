@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.1.4",
+  "version": "5.1.5",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -55,12 +55,12 @@
       "plugs": ["default", "ssh-keys"]
     },
     "mac": {
+      "artifactName": "${productName}.${arch}.${version}.${ext}",
       "icon": "icons/icon.icns",
       "type": "development",
       "category": "public.app-category.developer-tools",
       "target": [
-        {"target": "dmg", "arch": "x64"},
-        {"target": "dmg", "arch": "arm64", "artifactName": "${productName}.${version}-${arch}.${ext}"}
+        {"target": "dmg", "arch": ["x64", "arm64"]}
       ],
       "extendInfo": {
         "ElectronTeamID": "68JN8DV835"
