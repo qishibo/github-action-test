@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.1.7",
+  "version": "5.1.8",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -60,7 +60,8 @@
       "type": "development",
       "category": "public.app-category.developer-tools",
       "target": [
-        {"target": "dmg", "arch": ["x64", "arm64"]}
+        {"target": "dmg", "arch": ["x64", "arm64"]},
+        {"target": "zip", "arch": ["x64", "arm64"]}
       ],
       "extendInfo": {
         "ElectronTeamID": "68JN8DV835"
