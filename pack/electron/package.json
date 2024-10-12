@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.1.5",
+  "version": "5.1.6",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -35,7 +35,7 @@
     "win": {
       "icon": "icons/icon.ico",
       "target": [
-        "nsis"
+        {"target": "nsis", "arch": ["x64", "arm64"]}
       ]
     },
     "nsis": {
@@ -48,7 +48,7 @@
       "icon": "icons/icon.png",
       "category": "Utility",
       "target": [
-        "AppImage"
+        {"target": "AppImage", "arch": ["x64", "arm64"]}
       ]
     },
     "snap": {
