@@ -13,7 +13,6 @@
   "build": {
     "appId": "me.qii404.another-redis-desktop-manager",
     "productName": "Another Redis Desktop Manager",
-    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "copyright": "Copyright © 2024 qii404",
     "asar": true,
     "directories": {
