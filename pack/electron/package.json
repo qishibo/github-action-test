@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.1.8",
+  "version": "5.1.9",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -13,7 +13,6 @@
   "build": {
     "appId": "me.qii404.another-redis-desktop-manager",
     "productName": "Another Redis Desktop Manager",
-    "artifactName": "${productName}-${arch}.${version}.${ext}",
     "copyright": "Copyright © 2024 qii404",
     "asar": true,
     "directories": {
@@ -55,7 +54,6 @@
       "plugs": ["default", "ssh-keys"]
     },
     "mac": {
-      "artifactName": "${productName}.${arch}.${version}.${ext}",
       "icon": "icons/icon.icns",
       "type": "development",
       "category": "public.app-category.developer-tools",
