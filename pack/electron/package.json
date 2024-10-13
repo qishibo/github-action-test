@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.1.9",
+  "version": "5.2.0",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -13,6 +13,7 @@
   "build": {
     "appId": "me.qii404.another-redis-desktop-manager",
     "productName": "Another Redis Desktop Manager",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "copyright": "Copyright © 2024 qii404",
     "asar": true,
     "directories": {
@@ -35,13 +36,18 @@
       "icon": "icons/icon.ico",
       "target": [
         {"target": "nsis", "arch": ["x64", "arm64"]}
+        {"target": "portable", "arch": ["x64", "arm64"]}
       ]
     },
     "nsis": {
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
       "allowToChangeInstallationDirectory": true,
       "oneClick": false,
       "menuCategory": true,
       "allowElevation": true
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}",
     },
     "linux": {
       "icon": "icons/icon.png",
@@ -58,8 +64,7 @@
       "type": "development",
       "category": "public.app-category.developer-tools",
       "target": [
-        {"target": "dmg", "arch": ["x64", "arm64"]},
-        {"target": "zip", "arch": ["x64", "arm64"]}
+        {"target": "dmg", "arch": ["x64", "arm64"]}
       ],
       "extendInfo": {
         "ElectronTeamID": "68JN8DV835"
