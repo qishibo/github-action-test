@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.2.2",
+  "version": "5.2.3",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -36,19 +36,14 @@
       "icon": "icons/icon.ico",
       "target": [
         {"target": "nsis", "arch": ["x64", "arm64"]},
-        {"target": "portable", "arch": ["x64", "arm64"]},
         {"target": "zip", "arch": ["x64", "arm64"]}
       ]
     },
     "nsis": {
-      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
       "allowToChangeInstallationDirectory": true,
       "oneClick": false,
       "menuCategory": true,
       "allowElevation": true
-    },
-    "portable": {
-      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
     },
     "linux": {
       "icon": "icons/icon.png",
