@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -13,6 +13,7 @@
   "build": {
     "appId": "me.qii404.another-redis-desktop-manager",
     "productName": "Another Redis Desktop Manager",
+    "artifactName": "${productName}-${os}-${version}-${arch}.${ext}",
     "copyright": "Copyright © 2024 qii404",
     "asar": true,
     "directories": {
@@ -35,7 +36,8 @@
       "icon": "icons/icon.ico",
       "target": [
         {"target": "nsis", "arch": ["x64", "arm64"]},
-        {"target": "portable", "arch": ["x64", "arm64"]}
+        {"target": "portable", "arch": ["x64", "arm64"]},
+        {"target": "zip", "arch": ["x64", "arm64"]}
       ]
     },
     "nsis": {
