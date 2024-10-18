@@ -1,6 +1,6 @@
 {
   "name": "another-redis-desktop-manager",
-  "version": "5.2.3",
+  "version": "5.2.4",
   "description": "A faster, better and more stable redis desktop manager.",
   "author": "Another",
   "private": true,
@@ -45,6 +45,7 @@
       "menuCategory": true,
       "allowElevation": true
     },
+    "zip": {"artifactName": "${productName}-zzzip-${os}-${version}-${arch}.${ext}"},
     "linux": {
       "icon": "icons/icon.png",
       "category": "Utility",
