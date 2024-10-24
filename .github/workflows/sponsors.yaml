@@ -1,8 +1,6 @@
 name: Generate Sponsors README
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
+  push
 permissions:
   contents: write
 jobs:
