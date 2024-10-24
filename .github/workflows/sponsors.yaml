@@ -2,7 +2,7 @@ name: Generate Sponsors README
 on:
   workflow_dispatch:
   schedule:
-    - cron: */1 * * * 0-6
+    - cron: 02 15 * * 0-6
 permissions:
   contents: write
 jobs:
