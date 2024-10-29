@@ -15,6 +15,7 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
           file: 'README.md'
+          active-only: false,
           template: '<a href="https://github.com/{{ login }}"><img src="{{ avatarUrl }}" width="60px" alt="{{ name }}" style="border-radius: 50%;" /></a>'
       - run: cat README.md
 
