@@ -39,7 +39,7 @@ jobs:
         shell: pwsh
         run: |
           $tag = git describe --tags --abbrev=0 2>$null
-          if (-not $tag) { $tag = "v0.0.0-build-${{ github.sha | substr 0,8 }}" }
+          if (-not $tag) { $tag = "unknown" }
           echo "VERSION=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Print info
