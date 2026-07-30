@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019 # 关键：切换内置VS2019镜像
 
     steps:
       - name: Checkout code
@@ -22,9 +22,11 @@ jobs:
           ref: ${{ github.event.inputs.select_branch }}
           fetch-depth: 0
 
-      # 关键：安装Windows原生模块编译依赖（python + msvc编译工具）
-      - name: Install Windows Build Tools
+      # 加载VS2019 C++编译环境
+      - name: Enable MSVC VS2019
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          toolset: 14.29
 
       - name: Setup Node.js 14.x
         uses: actions/setup-node@v4
@@ -32,28 +34,49 @@ jobs:
           node-version: '14.x'
           cache: 'npm'
 
-      # Windows PowerShell 获取tag
+      # 提取版本Tag
       - name: Get latest tag
         shell: pwsh
         run: |
           $tag = git describe --tags --abbrev=0 2>$null
-          if (-not $tag) { $tag = "unknown" }
+          if (-not $tag) { $tag = "v0.0.0-build-${{ github.sha | substr 0,8 }}" }
           echo "VERSION=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Print info
         shell: pwsh
         run: |
           git branch --show-current
-          # echo "构建分支：$(${{ github.event.inputs.select_branch }})"
           echo "Node版本：$(node -v)"
           echo "当前Tag版本：$env:VERSION"
 
+      # 正常编译原生模块，不再报gyp错误
       - name: Build app
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          # 配置npm全局编译参数，指定msvc版本，兼容node14
           npm config set msvs_version 2019
           npm ci
           npm run pack:prepare
           npm run pack:appx
+
+      # 1. 工作流制品，页面直接下载
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appx-build-${{ env.VERSION }}
+          path: dist/*.appx # 修改为你的appx输出目录
+
+      # 2. 自动发布GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
+          body: |
+            自动构建发布
+            分支：${{ github.event.inputs.select_branch }}
+            提交哈希：${{ github.sha }}
+          files: dist/*.appx
+          overwrite: true
