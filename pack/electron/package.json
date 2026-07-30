@@ -24,7 +24,8 @@
     "files": [
       "!static/js/*.map",
       "!static/css/*.map",
-      "!*.map"
+      "!*.map",
+      "!appx/"
     ],
     "publish": [{
       "provider": "github",
@@ -35,19 +36,22 @@
     "win": {
       "icon": "icons/icon.ico",
       "target": [
-        {"target": "nsis", "arch": ["x64", "arm64"]},
-        {"target": "portable", "arch": ["x64"]}
+        "appx"
       ]
-    },
-    "portable": {
-      "useZip": true,
-      "artifactName": "${productName}-${os}-Portable-${version}-${arch}.${ext}"
     },
     "nsis": {
       "allowToChangeInstallationDirectory": true,
       "oneClick": false,
       "menuCategory": true,
       "allowElevation": true
+    },
+    "appx": {
+      "applicationId": "qii404.AnotherRedisDesktopManager",
+      "identityName": "8437qii404.AnotherRedisDesktopManager",
+      "backgroundColor": "#ffffff",
+      "publisher": "CN=B77E3FE8-0A5F-4F5F-B616-1DFC90AA393B",
+      "publisherDisplayName": "qii404",
+      "languages": ["en-US", "zh-CN", "zh-TW", "de", "fr", "it", "pt", "ru", "tr", "uk", "es"]
     },
     "linux": {
       "icon": "icons/icon.png",
@@ -73,3 +77,4 @@
     "afterSign": "pack/scripts/notarize.js"
   }
 }
+

@@ -33,7 +33,6 @@ jobs:
           node-version: '16.x'
           cache: 'npm'
 
-      # 提取Tag版本号 PowerShell
       - name: Get latest tag
         shell: pwsh
         run: |
@@ -45,27 +44,23 @@ jobs:
         shell: pwsh
         run: |
           git branch --show-current
-          echo "Node版本：$(node -v)"
-          echo "当前Tag版本：$env:VERSION"
+          echo "Node Version：$(node -v)"
+          echo "Tag：$env:VERSION"
 
-      # 正常编译原生模块，不再屏蔽ssh2/cpu-features
       - name: Install & Build Appx
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          # node16+自动识别VS2022，无需写死msvs_version
           npm ci
           npm run pack:prepare
           npm run pack:appx
 
-      # 1. 工作流临时制品下载
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: appx-build-${{ env.VERSION }}
-          path: dist/*.appx # 替换为你的打包输出目录
+          path: dist/*.appx
 
-      # 2. 自动创建GitHub Release并上传安装包
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         env:
@@ -74,8 +69,8 @@ jobs:
           tag_name: ${{ env.VERSION }}
           name: Release ${{ env.VERSION }}
           body: |
-            构建环境：Windows-latest + Node16
-            构建分支：${{ github.event.inputs.select_branch }}
-            提交哈希：${{ github.sha }}
+            env：Windows-latest + Node16
+            branch：${{ github.event.inputs.select_branch }}
+            hash：${{ github.sha }}
           files: dist/*.appx
           overwrite: true
