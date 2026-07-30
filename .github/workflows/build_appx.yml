@@ -40,7 +40,7 @@ jobs:
         shell: pwsh
         run: |
           git branch --show-current
-          echo "构建分支：$(${{ github.event.inputs.select_branch }})"
+          echo "构建分支：${{ github.event.inputs.select_branch }}"
           echo "Node版本：$(node -v)"
           echo "当前Tag版本：$env:VERSION"
 
