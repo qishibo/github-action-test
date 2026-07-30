@@ -13,6 +13,7 @@
     "lint:init": "eslint --init",
     "asar": "asar pack dist dist/app.asar --unpack-dir \"{app.asar,build-apps,app.asar.unpacked}\"",
     "pack:prepare": "npm run build && cp -r pack/electron/* dist/",
+    "pack:appx": "electron-builder --project=dist -w appx -p never",
     "pack:win": "electron-builder --project=dist -w -p never",
     "pack:win32": "electron-builder --project=dist -w --ia32 -p never",
     "pack:mac": "electron-builder --project=dist -m --x64 -p never",
